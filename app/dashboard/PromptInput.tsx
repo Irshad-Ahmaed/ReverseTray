@@ -8,8 +8,12 @@ import { Loader2, Send, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
+type PromptFormData = {
+  prompt: string;
+};
+
 export default function PromptInput() {
-  const { register, handleSubmit, reset, watch } = useForm();
+  const { register, handleSubmit, reset, watch } = useForm<PromptFormData>();
   const addMessage = useChatStore((s) => s.addMessage);
   const setPlan = usePlanStore((s) => s.setPlan);
   const uploadedFiles = useFileStore((s) => s.uploadedFiles);
@@ -24,11 +28,14 @@ export default function PromptInput() {
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
-    el.style.height = "auto"; // Reset
-    el.style.height = `${Math.min(el.scrollHeight, 200)}px`; // Limit max height to 200px
+    if (promptValue.length === 0) el.style.height = "40";
+    else {
+      el.style.height = "auto"; // Reset
+      el.style.height = `${Math.min(el.scrollHeight, 200)}px`; // Limit max height to 200px
+    }
   }, [promptValue]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: PromptFormData) => {
     const prompt = data.prompt;
     if (!prompt.trim()) return;
 
@@ -88,7 +95,10 @@ export default function PromptInput() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex items-center gap-2 p-4">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex items-end gap-2 p-4"
+      >
         <Textarea
           {...register("prompt")}
           ref={(e) => {

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { DiffEditor, Monaco } from "@monaco-editor/react";
+import type * as monaco from "monaco-editor";
 
 interface MonacoDiffEditorProps {
   originalContent: string;
@@ -17,9 +18,12 @@ export default function MonacoDiffEditor({
   onChange,
   readOnly = false,
 }: MonacoDiffEditorProps) {
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<monaco.editor.IStandaloneDiffEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
-  const modelRef = useRef<{ original?: any; modified?: any }>({});
+  const modelRef = useRef<{
+    original?: monaco.editor.ITextModel;
+    modified?: monaco.editor.ITextModel;
+  }>({});
 
   useEffect(() => {
     const { original, modified } = modelRef.current;
@@ -37,7 +41,7 @@ export default function MonacoDiffEditor({
     };
   }, []);
 
-  const handleEditorMount = (editor: any, monaco: Monaco) => {
+  const handleEditorMount = (editor: monaco.editor.IStandaloneDiffEditor, monaco: Monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
 

@@ -1,51 +1,57 @@
-'use client'
-import { useRef, useState } from 'react'
-import { useFileStore } from '@/store/fileStore'
-import { Upload, File, X, FolderOpen } from 'lucide-react'
+"use client";
+import { useRef, useState } from "react";
+import { useFileStore } from "@/store/fileStore";
+import { Upload, File, X, FolderOpen, Loader2Icon } from "lucide-react";
 
 export default function FileUploader() {
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const uploadFiles = useFileStore(s => s.uploadFiles)
-  const uploadedFiles = useFileStore(s => s.uploadedFiles)
-  const clearFiles = useFileStore(s => s.clearFiles)
-  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadFiles = useFileStore((s) => s.uploadFiles);
+  const uploadedFiles = useFileStore((s) => s.uploadedFiles);
+  const clearFiles = useFileStore((s) => s.clearFiles);
+  const [uploading, setUploading] = useState(false);
 
   const getLanguageFromPath = (path: string): string => {
-    const ext = path.split('.').pop()?.toLowerCase()
+    const ext = path.split(".").pop()?.toLowerCase();
     const map: Record<string, string> = {
-      'ts': 'typescript', 'tsx': 'typescript',
-      'js': 'javascript', 'jsx': 'javascript',
-      'py': 'python', 'java': 'java',
-      'go': 'go', 'rs': 'rust',
-      'css': 'css', 'html': 'html',
-      'json': 'json', 'md': 'markdown'
-    }
-    return map[ext || ''] || 'plaintext'
-  }
+      ts: "typescript",
+      tsx: "typescript",
+      js: "javascript",
+      jsx: "javascript",
+      py: "python",
+      java: "java",
+      go: "go",
+      rs: "rust",
+      css: "css",
+      html: "html",
+      json: "json",
+      md: "markdown",
+    };
+    return map[ext || ""] || "plaintext";
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    setUploading(true)
+    setUploading(true);
 
     const uploadedFilesList = await Promise.all(
       Array.from(files).map(async (file) => {
-        const content = await file.text()
+        const content = await file.text();
         return {
           path: file.name,
           content,
           language: getLanguageFromPath(file.name),
-          size: file.size
-        }
+          size: file.size,
+        };
       })
-    )
+    );
 
-    uploadFiles(uploadedFilesList)
-    setUploading(false)
-  }
+    uploadFiles(uploadedFilesList);
+    setUploading(false);
+  };
 
-  const fileCount = Object.keys(uploadedFiles).length
+  const fileCount = Object.keys(uploadedFiles).length;
 
   return (
     <div className="p-4 bg-white">
@@ -70,27 +76,33 @@ export default function FileUploader() {
           onClick={() => fileInputRef.current?.click()}
           className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all"
         >
-          <Upload className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-          <p className="text-sm font-medium text-gray-700 mb-1">
-            Upload your code files
-          </p>
-          <p className="text-xs text-gray-500">
-            Click to select files (.ts, .js, .py, etc.)
-          </p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept=".ts,.tsx,.js,.jsx,.py,.java,.go,.rs,.css,.html,.json,.md"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
+          {uploading ? (
+            <Loader2Icon className="size-5 animate-spin" />
+          ) : (
+            <>
+              <Upload className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+              <p className="text-sm font-medium text-gray-700 mb-1">
+                Upload your code files
+              </p>
+              <p className="text-xs text-gray-500">
+                Click to select files (.ts, .js, .py, etc.)
+              </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".ts,.tsx,.js,.jsx,.py,.java,.go,.rs,.css,.html,.json,.md"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+            </>
+          )}
         </div>
       ) : (
         <div>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-600">
-              {fileCount} file{fileCount !== 1 ? 's' : ''} uploaded
+              {fileCount} file{fileCount !== 1 ? "s" : ""} uploaded
             </span>
             <button
               onClick={() => fileInputRef.current?.click()}
@@ -127,5 +139,5 @@ export default function FileUploader() {
         </div>
       )}
     </div>
-  )
+  );
 }

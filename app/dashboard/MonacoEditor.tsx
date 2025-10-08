@@ -1,11 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useFileStore } from "@/store/fileStore";
 import { usePlanStore } from "@/store/planStore";
 import { FileX, Save } from "lucide-react";
+import * as monaco from "monaco-editor";
 
-export default function MonacoEditor({setShowFileEditor}: { setShowFileEditor: (show: boolean) => void }) {
+type RequireType = {
+  config: (options: { paths: Record<string, string> }) => void;
+  (modules: string[], callback: () => void): void;
+};
+
+export default function MonacoEditor({
+  setShowFileEditor,
+}: {
+  setShowFileEditor: (show: boolean) => void;
+}) {
   const selectedFile = useFileStore((s) => s.selectedFile);
   const uploadedFiles = useFileStore((s) => s.uploadedFiles);
   const getFileContent = useFileStore((s) => s.getFileContent);
@@ -13,8 +23,8 @@ export default function MonacoEditor({setShowFileEditor}: { setShowFileEditor: (
   const currentPlan = usePlanStore((s) => s.currentPlan);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const editorRef = useRef<any>(null);
-  const monacoRef = useRef<any>(null);
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const monacoRef = useRef<typeof monaco | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [savedContent, setSavedContent] = useState("");
 
@@ -40,7 +50,7 @@ export default function MonacoEditor({setShowFileEditor}: { setShowFileEditor: (
     return langMap[ext || ""] || "plaintext";
   };
 
-  const getContent = () => {
+  const getContent = useCallback((): string => {
     if (!selectedFile) return "";
 
     // Check uploaded files first
@@ -57,52 +67,18 @@ export default function MonacoEditor({setShowFileEditor}: { setShowFileEditor: (
     }
 
     return "";
-  };
+  }, [selectedFile, uploadedFiles, getFileContent, currentPlan]);
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     if (!selectedFile || !editorRef.current) return;
     const currentContent = editorRef.current.getValue();
     updateModifiedFile(selectedFile, currentContent);
     setSavedContent(currentContent);
     setHasChanges(false);
-  };
-
-  // --- Load Monaco once ---
-  useEffect(() => {
-    const loadMonaco = () => {
-      (window as any).require.config({
-        paths: {
-          vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs",
-        },
-      });
-      (window as any).require(["vs/editor/editor.main"], () => {
-        monacoRef.current = (window as any).monaco;
-        if (selectedFile) initializeEditor();
-      });
-    };
-
-    if (!(window as any).monaco) {
-      const script = document.createElement("script");
-      script.src =
-        "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js";
-      script.async = true;
-      script.onload = loadMonaco;
-      document.head.appendChild(script);
-    } else {
-      monacoRef.current = (window as any).monaco;
-      if (selectedFile) initializeEditor();
-    }
-
-    return () => {
-      if (editorRef.current) {
-        editorRef.current.dispose();
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [selectedFile, editorRef, updateModifiedFile]);
 
   // --- Initialize Monaco when a file is selected ---
-  const initializeEditor = () => {
+  const initializeEditor = useCallback(() => {
     if (!containerRef.current || !monacoRef.current || !selectedFile) return;
 
     const monaco = monacoRef.current;
@@ -132,7 +108,7 @@ export default function MonacoEditor({setShowFileEditor}: { setShowFileEditor: (
 
     // Track changes
     editorRef.current.onDidChangeModelContent(() => {
-      const currentContent = editorRef.current.getValue();
+      const currentContent = editorRef.current?.getValue();
       setHasChanges(currentContent !== savedContent);
     });
 
@@ -141,7 +117,46 @@ export default function MonacoEditor({setShowFileEditor}: { setShowFileEditor: (
       monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
       handleSave
     );
-  };
+  }, [selectedFile, getContent, handleSave, savedContent]);
+
+  // --- Load Monaco once ---
+  useEffect(() => {
+    const loadMonaco = () => {
+      (window as unknown as { require: RequireType }).require.config({
+        paths: {
+          vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs",
+        },
+      });
+
+      (window as unknown as { require: RequireType }).require(
+        ["vs/editor/editor.main"],
+        () => {
+          monacoRef.current = (
+            window as unknown as { monaco: typeof monaco }
+          ).monaco;
+          if (selectedFile) initializeEditor();
+        }
+      );
+    };
+
+    if (!(window as unknown as { monaco?: typeof monaco }).monaco) {
+      const script = document.createElement("script");
+      script.src =
+        "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js";
+      script.async = true;
+      script.onload = loadMonaco;
+      document.head.appendChild(script);
+    } else {
+      monacoRef.current = (window as unknown as { monaco: typeof monaco }).monaco;
+      if (selectedFile) initializeEditor();
+    }
+
+    return () => {
+      if (editorRef.current) {
+        editorRef.current.dispose();
+      }
+    };
+  }, [initializeEditor, selectedFile]);
 
   // --- Update file content dynamically ---
   useEffect(() => {
@@ -161,8 +176,7 @@ export default function MonacoEditor({setShowFileEditor}: { setShowFileEditor: (
     editorRef.current.setModel(model);
     setSavedContent(content);
     setHasChanges(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFile, uploadedFiles, currentPlan]);
+  }, [selectedFile, uploadedFiles, currentPlan, getContent, initializeEditor]);
 
   // --- No file selected view ---
   if (!selectedFile) {
@@ -196,7 +210,7 @@ export default function MonacoEditor({setShowFileEditor}: { setShowFileEditor: (
             <span>Save (Ctrl+S)</span>
           </button>
           <button
-            onClick={()=> setShowFileEditor(false)}
+            onClick={() => setShowFileEditor(false)}
             className="flex items-center gap-1 px-3 py-1 cursor-pointer bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs"
           >
             <span className="">X</span>

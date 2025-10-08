@@ -7,7 +7,7 @@ import ProposedChangesViewer from "@/components/ProposedChangesViewer";
 import FileExplorer from "./FileExplorer";
 import MonacoEditor from "./MonacoEditor";
 import ConversationList from "./ConversationList";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeftFromLine, ArrowRightFromLine, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -16,12 +16,31 @@ export default function DashboardPage() {
   const [showConversation, setShowConversation] = useState(false);
   const [toggleFileView, setToggleFileView] = useState(true);
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 600) {
+        setShowConversation(false);
+        setToggleFileView(false);
+      }
+    };
+    
+    handleResize();
+
+    // this will listen to resize of window
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* Left: Conversation Management + Chat */}
       <div
         className={`${
-          !showConversation ? "w-fit pr-5" : "w-80"
+          !showConversation ? "w-fit pr-5" : "sm:w-fit lg:w-80"
         } border-gray-200 bg-black flex flex-col`}
       >
         {/* Conversations List - Top Half */}
@@ -68,7 +87,7 @@ export default function DashboardPage() {
       {/* Right: File Upload + Explorer */}
       <div
         className={`${
-          toggleFileView ? "w-80 bg-white" : "w-fit px-2 pt-2 bg-black"
+          toggleFileView ? "sm:w-fit md:w-80 bg-white" : "w-fit px-2 pt-2 bg-black"
         } border-l border-gray-200 flex flex-col`}
       >
         {toggleFileView ? (

@@ -59,6 +59,7 @@ export const useFileStore = create<FileState>()(
             },
             modifiedFiles: {
               ...state.modifiedFiles,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               [filename]: undefined as any,
             },
           };

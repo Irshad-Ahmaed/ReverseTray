@@ -297,7 +297,7 @@ export default function ProposedChangesViewer() {
                     All Changes Applied!
                   </h3>
                   <p className="text-green-700">
-                    Click "Download ZIP" to get your modified codebase.
+                    Click &quot;Download ZIP&quot; to get your modified codebase.
                   </p>
                 </div>
               </div>

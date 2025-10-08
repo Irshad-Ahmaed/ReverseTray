@@ -1,15 +1,47 @@
 import { NextResponse } from "next/server";
 import { callMixtral } from "@/lib/llm";
 
+interface UploadedFile {
+  content: string;
+}
+
+interface ChangeDetail {
+  lineNumber: number;
+  type: string;
+  description: string;
+}
+
+interface ProposedChange {
+  filePath: string;
+  action: string;
+  description: string;
+  reasoning: string;
+  originalContent: string;
+  proposedContent: string;
+  changes: ChangeDetail[];
+}
+
+interface ParsedPlan {
+  title: string;
+  description: string;
+  proposedChanges: ProposedChange[];
+}
+
+interface RequestBody {
+  prompt: string;
+  files: Record<string, UploadedFile>;
+}
+
+
 export async function POST(req: Request) {
   try {
-    const { prompt, files } = await req.json();
+    const { prompt, files }: RequestBody = await req.json();
 
     // Build context from uploaded files
     let filesContext = '';
     if (files && Object.keys(files).length > 0) {
       filesContext = '\n\n=== CURRENT CODEBASE ===\n';
-      Object.entries(files).forEach(([path, file]: [string, any]) => {
+      Object.entries(files).forEach(([path, file]) => {
         filesContext += `\n--- File: ${path} ---\n${file.content}\n`;
       });
     }
@@ -71,14 +103,14 @@ Analyze the codebase and propose modifications to accomplish this task.`;
       throw new Error("No valid JSON found in AI response");
     }
 
-    const parsedPlan = JSON.parse(jsonMatch[0]);
+    const parsedPlan: ParsedPlan = JSON.parse(jsonMatch[0]);
 
     const plan = {
       id: `plan-${Date.now()}`,
       title: parsedPlan.title || "Code Modifications",
       description: parsedPlan.description || "",
       createdAt: new Date().toISOString(),
-      proposedChanges: (parsedPlan.proposedChanges || []).map((change: any) => ({
+      proposedChanges: parsedPlan.proposedChanges.map((change) => ({
         filePath: change.filePath,
         action: change.action || 'modify',
         description: change.description || '',
