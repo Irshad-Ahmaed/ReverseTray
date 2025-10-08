@@ -3,7 +3,7 @@ import { useFileStore } from '@/store/fileStore'
 
 export default function ApplyChanges() {
   const selectedFile = useFileStore((s) => s.selectedFile)
-  const updateFile = useFileStore((s) => s.updateFile)
+  // const updateFile = useFileStore((s) => s.updateFile)
 
   const applyAIEdit = async () => {
     const response = await fetch('/api/generate', {
@@ -11,7 +11,7 @@ export default function ApplyChanges() {
       body: JSON.stringify({ filename: selectedFile }),
     }).then((res) => res.json())
 
-    updateFile(selectedFile!, response.code)
+    // updateFile(selectedFile!, response.code)
   }
 
   return (

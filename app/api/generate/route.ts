@@ -1,11 +1,11 @@
 // app/api/generate/route.ts
 import { NextResponse } from 'next/server'
 import { callCodeLlama } from '@/lib/llm'
-import { connectDB } from '@/lib/db'
+// import { connectDB } from '@/lib/db'
 import File from '@/models/File'
 
 export async function POST(req: Request) {
-  await connectDB()
+  // await connectDB()
   const { userId, filename, prompt } = await req.json()
 
   const result = await callCodeLlama(prompt)

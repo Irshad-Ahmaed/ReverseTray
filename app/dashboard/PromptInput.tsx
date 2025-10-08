@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 type PromptFormData = {
   prompt: string;
-};
+}
 
 export default function PromptInput() {
   const { register, handleSubmit, reset, watch } = useForm<PromptFormData>();
@@ -28,11 +28,8 @@ export default function PromptInput() {
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
-    if (promptValue.length === 0) el.style.height = "40";
-    else {
-      el.style.height = "auto"; // Reset
-      el.style.height = `${Math.min(el.scrollHeight, 200)}px`; // Limit max height to 200px
-    }
+    el.style.height = "auto"; // Reset
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`; // Limit max height to 200px
   }, [promptValue]);
 
   const onSubmit = async (data: PromptFormData) => {
@@ -95,10 +92,7 @@ export default function PromptInput() {
         </div>
       )}
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="flex items-end gap-2 p-4"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="flex items-end gap-2 p-4">
         <Textarea
           {...register("prompt")}
           ref={(e) => {
