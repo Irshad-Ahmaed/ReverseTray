@@ -325,7 +325,7 @@ export default function ProposedChangesViewer() {
                             Code Review Summary
                           </h3>
                           <p className="text-sm text-gray-600 mb-3">
-                            AI review completed successfully. Here's the breakdown:
+                            AI review completed successfully. Here&apos;s the breakdown:
                           </p>
 
                           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
