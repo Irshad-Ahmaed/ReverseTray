@@ -17,7 +17,7 @@ export async function callMixtral(messagesOrPrompt: string | any[]) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "qwen/qwen3-32b",
+      model: "llama-3.3-70b-versatile",
       messages: messages,
       temperature: 0.7,
       max_tokens: 4000,
@@ -59,7 +59,7 @@ export async function callCodeLlama(prompt: string) {
 
 export async function callGemini(prompt: string) {
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`,
     {
       method: "POST",
       headers: {

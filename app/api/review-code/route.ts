@@ -1,6 +1,5 @@
-
-import { NextResponse } from 'next/server';
-import { callGemini } from '@/lib/llm';
+import { NextResponse } from "next/server";
+import { callGemini } from "@/lib/llm";
 
 interface RequestBody {
   appliedCode: string[];
@@ -11,7 +10,11 @@ export async function POST(req: Request) {
   try {
     const { appliedCode, originalFiles }: RequestBody = await req.json();
 
-    const allCode = appliedCode.join('\n\n---\n\n');
+    const appliedCodeArray = Array.isArray(appliedCode)
+      ? appliedCode
+      : [appliedCode];
+
+    const allCode = appliedCodeArray.join("\n\n---\n\n");
 
     const prompt = `Review the following modified code for quality, best practices, and potential issues:
 
@@ -20,7 +23,7 @@ ${allCode}
 Original files context:
 ${Object.entries(originalFiles)
   .map(([path, file]) => `\n--- File: ${path} ---\n${file.content}`)
-  .join('\n')}
+  .join("\n")}
 
 Provide a structured review with:
 1. Overall quality score (1-10)
@@ -38,7 +41,9 @@ Format your response as JSON:
 
     const result = await callGemini(prompt);
 
-    const feedback = result?.candidates?.[0]?.content?.parts?.[0]?.text || 'No feedback returned.';
+    const feedback =
+      result?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "No feedback returned.";
 
     // Try to parse as JSON, otherwise return as text feedback
     let parsedReview;
@@ -62,13 +67,16 @@ Format your response as JSON:
     }
 
     return NextResponse.json({
-      status: 'approved',
+      status: "approved",
       ...parsedReview,
     });
   } catch (error) {
-    console.error('Review error:', error);
+    console.error("Review error:", error);
     return NextResponse.json(
-      { error: 'Failed to review code', details: error instanceof Error ? error.message : String(error) },
+      {
+        error: "Failed to review code",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
